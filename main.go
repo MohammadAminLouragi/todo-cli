@@ -9,11 +9,13 @@ import (
 
 type User struct {
 	Id       int
+	Name     string
 	Email    string
 	Password string
 }
 
 var userStorage []User
+var authenticatedUser *User
 
 func main() {
 	fmt.Println("Hello to TODO app.")
@@ -24,7 +26,7 @@ func main() {
 	for {
 
 		runCommand(*command)
-		
+
 		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Println("please enter another command:")
 		scanner.Scan()
@@ -35,6 +37,9 @@ func main() {
 }
 
 func runCommand(command string) {
+	if command != "register-user" && command != "exit" && authenticatedUser == nil {
+		login()
+	}
 	switch command {
 	case "create-task":
 		createTask()
@@ -42,8 +47,10 @@ func runCommand(command string) {
 		createCategory()
 	case "register-user":
 		registerUser()
-	case "login":
-		login()
+	case "login-out":
+		authenticatedUser = nil
+	case "exit":
+		os.Exit(0)
 	default:
 		fmt.Println("command is not valid", command)
 	}
@@ -89,7 +96,11 @@ func createCategory() {
 
 func registerUser() {
 	scanner := bufio.NewScanner(os.Stdin)
-	var id, email, password string
+	var name, email, password string
+
+	fmt.Println("please enter your name:")
+	scanner.Scan()
+	name = scanner.Text()
 
 	fmt.Println("please enter the user email")
 	scanner.Scan()
@@ -99,24 +110,29 @@ func registerUser() {
 	scanner.Scan()
 	password = scanner.Text()
 
-	id = email
-	fmt.Println("user:", id, email, password)
-
 	user := User{
 		Id:       len(userStorage) + 1,
+		Name:     name,
 		Email:    email,
 		Password: password,
 	}
 
+	fmt.Println("user:", user.Id, user.Name, user.Email)
+
 	userStorage = append(userStorage, user)
 
-	fmt.Printf("userStorage: %v \n", userStorage)
+	//fmt.Printf("userStorage: %v \n", userStorage)
 }
 
 func login() {
 
 	scanner := bufio.NewScanner(os.Stdin)
-	var id, email, password string
+	var name, email, password string
+	var id int
+
+	fmt.Println("please enter your name:")
+	scanner.Scan()
+	name = scanner.Text()
 
 	fmt.Println("please enter the email")
 	scanner.Scan()
@@ -126,8 +142,21 @@ func login() {
 	scanner.Scan()
 	password = scanner.Text()
 
-	id = email
+	for _, user := range userStorage {
+		if user.Email == email && user.Password == password {
+			id = user.Id
+			fmt.Println("You are logged in.")
+			authenticatedUser = &user
 
-	fmt.Println("user:", id, email, password)
+			break
+		}
+	}
+
+	if authenticatedUser == nil {
+		fmt.Println("User Not Found.")
+		return
+	}
+
+	fmt.Println("user:", id, name, email, password)
 
 }
