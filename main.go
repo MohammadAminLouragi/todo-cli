@@ -14,7 +14,17 @@ type User struct {
 	Password string
 }
 
+type Task struct {
+	ID       int
+	Title    string
+	DueDate  string
+	Category string
+	IsDone   bool
+	UserId   int
+}
+
 var userStorage []User
+var taskStorage []Task
 var authenticatedUser *User
 
 func main() {
@@ -39,6 +49,9 @@ func main() {
 func runCommand(command string) {
 	if command != "register-user" && command != "exit" && authenticatedUser == nil {
 		login()
+		if authenticatedUser == nil {
+			return
+		}
 	}
 	switch command {
 	case "create-task":
@@ -47,12 +60,22 @@ func runCommand(command string) {
 		createCategory()
 	case "register-user":
 		registerUser()
+	case "list-task":
+		listTasks()
 	case "login-out":
 		authenticatedUser = nil
 	case "exit":
 		os.Exit(0)
 	default:
 		fmt.Println("command is not valid", command)
+	}
+}
+
+func listTasks() {
+	for _, task := range taskStorage {
+		if task.ID == authenticatedUser.Id {
+			fmt.Println(task.ID, " | ", task.Title, " | ", task.Category, " | ", task.DueDate)
+		}
 	}
 }
 
@@ -72,7 +95,18 @@ func createTask() {
 	scanner.Scan()
 	category = scanner.Text()
 
+	task := Task{
+		ID:       len(taskStorage) + 1,
+		Title:    name,
+		Category: category,
+		DueDate:  dueDate,
+		IsDone:   false,
+		UserId:   authenticatedUser.Id,
+	}
+
+	taskStorage = append(taskStorage, task)
 	fmt.Println("task:", name, category, dueDate)
+
 }
 
 func createCategory() {
