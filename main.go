@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 )
 
 type User struct {
@@ -32,16 +32,23 @@ type Category struct {
 	UserId int
 }
 
-var userStorage []User
-var taskStorage []Task
-var categoryStorage []Category
-var authenticatedUser *User
+var (
+	userStorage       []User
+	taskStorage       []Task
+	categoryStorage   []Category
+	authenticatedUser *User
+)
+
+const (
+	UserFile          = "user.txt"
+	SerializationMode = "json"
+)
 
 func main() {
 	fmt.Println("Hello to TODO app.")
 
 	// load users from user.txt file
-	loadUsersFromFile("user.txt")
+	loadUsersFromFile(UserFile)
 
 	command := flag.String("command", "no-command", "command to run")
 	flag.Parse()
@@ -59,43 +66,45 @@ func main() {
 
 }
 
-func loadUsersFromFile(s string) {
-	file, err := os.Open(s)
+func loadUsersFromFile(filename string) {
+	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
 	}
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
+
 	for scanner.Scan() {
-		var id int
-		var name, email, password string
 		line := scanner.Text()
-	
-		parts := strings.Split(line, ",")
-		if len(parts) != 4 {
-			fmt.Println("Invalid line format:", line)
+
+		user, err := parseUserLine(line)
+		if err != nil {
+			fmt.Println("Skipping invalid line:", err)
 			continue
 		}
 
-		fmt.Sscanf(parts[0], "ID:%d", &id)
-		fmt.Sscanf(parts[1], "Name:%s", &name)
-		fmt.Sscanf(parts[2], "Email:%s", &email)
-		fmt.Sscanf(parts[3], "Password:%s", &password)
+		userStorage = append(userStorage, *user)
+		fmt.Printf("Loaded user: %+v\n", *user)
+	}
 
-		user := User{
-			Id:       id,
-			Name:     name,
-			Email:    email,
-			Password: password,
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+	}
+}
+
+func parseUserLine(line string) (*User, error) {
+
+	// JSON Mode
+	if SerializationMode == "json" {
+		var u User
+		if err := json.Unmarshal([]byte(line), &u); err != nil {
+			return nil, fmt.Errorf("json parse failed: %w", err)
 		}
-		userStorage = append(userStorage, user)
+		return &u, nil
 	}
-
-	for _, user := range userStorage {
-
-		fmt.Printf("Loaded user: ID=%d, Name=%s, Email=%s\n", user.Id, user.Name, user.Email)
-	}
+	return nil, fmt.Errorf("unsupported serialization mode")
 }
 
 func runCommand(command string) {
@@ -231,23 +240,7 @@ func registerUser() {
 	userStorage = append(userStorage, user)
 
 	// Add new user to user.txt file
-	file, err := os.OpenFile("user.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
-	}
-
-	defer file.Close()
-
-	_, err = file.WriteString(fmt.Sprintf("ID:%d,Name:%s,Email:%s,Password:%s\n", user.Id, user.Name, user.Email, user.Password))
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return
-	}
-
-	fmt.Println("User registration completed: ", user.Id, user.Name, user.Email)
-
-	//fmt.Printf("userStorage: %v \n", userStorage)
+	writeUserToFile(&user)
 }
 
 func login() {
@@ -285,4 +278,40 @@ func login() {
 
 	fmt.Println("user:", id, name, email, password)
 
+}
+
+func writeUserToFile(user *User) {
+	file, err := os.OpenFile("user.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+
+	defer file.Close()
+
+	var output string
+
+	switch SerializationMode {
+	case "json":
+		data, err := json.Marshal(user)
+		if err != nil {
+			fmt.Println("Error serializing to JSON:", err)
+			return
+		}
+		output = string(data) + "\n"
+
+	default: // fallback to text format
+		output = fmt.Sprintf(
+			"ID:%d,Name:%s,Email:%s,Password:%s\n",
+			user.Id, user.Name, user.Email, user.Password,
+		)
+	}
+
+	_, err = file.WriteString(output)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+
+	fmt.Println("User registration completed: ", user.Id, user.Name, user.Email)
 }
