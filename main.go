@@ -39,6 +39,8 @@ var authenticatedUser *User
 func main() {
 	fmt.Println("Hello to TODO app.")
 
+	
+
 	command := flag.String("command", "no-command", "command to run")
 	flag.Parse()
 
@@ -185,9 +187,24 @@ func registerUser() {
 		Password: password,
 	}
 
-	fmt.Println("user:", user.Id, user.Name, user.Email)
-
 	userStorage = append(userStorage, user)
+
+	// Add new user to user.txt file
+	file, err := os.OpenFile("user.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+
+	defer file.Close()
+
+	_, err = file.WriteString(fmt.Sprintf("ID:%d,Name:%s,Email:%s,Password:%s\n", user.Id, user.Name, user.Email, user.Password))
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+
+	fmt.Println("User registration completed: ", user.Id, user.Name, user.Email)
 
 	//fmt.Printf("userStorage: %v \n", userStorage)
 }
