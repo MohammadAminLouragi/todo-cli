@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type User struct {
@@ -39,7 +40,8 @@ var authenticatedUser *User
 func main() {
 	fmt.Println("Hello to TODO app.")
 
-	
+	// load users from user.txt file
+	loadUsersFromFile("user.txt")
 
 	command := flag.String("command", "no-command", "command to run")
 	flag.Parse()
@@ -55,6 +57,45 @@ func main() {
 
 	}
 
+}
+
+func loadUsersFromFile(s string) {
+	file, err := os.Open(s)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var id int
+		var name, email, password string
+		line := scanner.Text()
+	
+		parts := strings.Split(line, ",")
+		if len(parts) != 4 {
+			fmt.Println("Invalid line format:", line)
+			continue
+		}
+
+		fmt.Sscanf(parts[0], "ID:%d", &id)
+		fmt.Sscanf(parts[1], "Name:%s", &name)
+		fmt.Sscanf(parts[2], "Email:%s", &email)
+		fmt.Sscanf(parts[3], "Password:%s", &password)
+
+		user := User{
+			Id:       id,
+			Name:     name,
+			Email:    email,
+			Password: password,
+		}
+		userStorage = append(userStorage, user)
+	}
+
+	for _, user := range userStorage {
+
+		fmt.Printf("Loaded user: ID=%d, Name=%s, Email=%s\n", user.Id, user.Name, user.Email)
+	}
 }
 
 func runCommand(command string) {
