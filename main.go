@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -114,6 +116,11 @@ func runCommand(command string) {
 			return
 		}
 	}
+
+	if command == "login" && authenticatedUser != nil {
+		fmt.Println("You are already logged in.")
+		return
+	}
 	switch command {
 	case "create-task":
 		createTask()
@@ -123,6 +130,8 @@ func runCommand(command string) {
 		registerUser()
 	case "list-task":
 		listTasks()
+	case "login":
+		login()
 	case "login-out":
 		authenticatedUser = nil
 	case "exit":
@@ -230,17 +239,35 @@ func registerUser() {
 	scanner.Scan()
 	password = scanner.Text()
 
+	// Hash the password before storing
+	hashedPassword, err := hashPassword(password)
+	if err != nil {
+		fmt.Println("error while hashing password")
+		
+		return
+	}
+
 	user := User{
 		Id:       len(userStorage) + 1,
 		Name:     name,
 		Email:    email,
-		Password: password,
+		Password: hashedPassword,
 	}
 
 	userStorage = append(userStorage, user)
 
 	// Add new user to user.txt file
 	writeUserToFile(&user)
+}
+
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+    err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+    return err == nil
 }
 
 func login() {
@@ -260,9 +287,10 @@ func login() {
 	fmt.Println("please enter the password:")
 	scanner.Scan()
 	password = scanner.Text()
-
+	
 	for _, user := range userStorage {
-		if user.Email == email && user.Password == password {
+		
+		if user.Email == email && CheckPasswordHash(password, user.Password) {
 			id = user.Id
 			fmt.Println("You are logged in.")
 			authenticatedUser = &user
