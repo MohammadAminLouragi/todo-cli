@@ -47,7 +47,7 @@ const (
 )
 
 func main() {
-	fmt.Println("Hello to TODO app.")
+	fmt.Println("Hello to TODO app.. lets go")
 
 	// load users from user.txt file
 	loadUsersFromFile(UserFile)
