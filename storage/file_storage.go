@@ -82,7 +82,7 @@ func (f *FileStorage) LoadUsersFromFile() {
 		}
 
 		*f.UserStorage = append(*f.UserStorage, *user)
-		fmt.Printf("Loaded user: %+v\n", *user)
+		fmt.Printf("Loaded user\n")
 	}
 
 	if err := scanner.Err(); err != nil {
