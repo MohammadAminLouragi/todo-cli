@@ -17,7 +17,7 @@ var (
 	taskStorage       []dto.Task
 	categoryStorage   []dto.Category
 	authenticatedUser *dto.User
-	dataStore         *storage.FileStorage
+	myStorage         storage.MyStorage
 )
 
 const (
@@ -29,8 +29,10 @@ func main() {
 	fmt.Println("Hello to TODO app.")
 
 	// init storage
-	dataStore = storage.NewFileStorage(&UserStorage, SerializationMode, UserFile)
-	dataStore.LoadUsersFromFile()
+	dataStore := storage.NewFileStorage(&UserStorage, SerializationMode, UserFile)
+
+	myStorage = dataStore
+	myStorage.Load()
 
 	command := flag.String("command", "no-command", "command to run")
 	flag.Parse()
@@ -196,7 +198,7 @@ func registerUser() {
 	UserStorage = append(UserStorage, user)
 
 	// Add new user to user.txt file
-	dataStore.WriteUserToFile(&user)
+	myStorage.Save(user)
 }
 
 func hashPassword(password string) (string, error) {

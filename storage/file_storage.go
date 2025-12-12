@@ -9,6 +9,8 @@ import (
 	"github.com/MohammadAminLouragi/todo-cli/dto"
 )
 
+
+
 type FileStorage struct {
 	SerializationMode string
 	UserPath          string
@@ -25,7 +27,8 @@ func NewFileStorage(userTorage *[]dto.User, mode string, userPath string) *FileS
 	}
 }
 
-func (f *FileStorage) WriteUserToFile(user *dto.User) {
+
+func (f *FileStorage) Save(user dto.User) {
 
 	file, err := os.OpenFile("user.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -62,7 +65,7 @@ func (f *FileStorage) WriteUserToFile(user *dto.User) {
 	fmt.Println("User registration completed: ", user.Id, user.Name, user.Email)
 }
 
-func (f *FileStorage) LoadUsersFromFile() {
+func (f *FileStorage) Load() {
 	file, err := os.Open(f.UserPath)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
