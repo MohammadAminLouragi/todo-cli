@@ -7,17 +7,19 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/MohammadAminLouragi/todo-cli/dto"
+	contract "github.com/MohammadAminLouragi/todo-cli/contract"
+	entity "github.com/MohammadAminLouragi/todo-cli/entity"
 	"github.com/MohammadAminLouragi/todo-cli/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	UserStorage       []dto.User
-	taskStorage       []dto.Task
-	categoryStorage   []dto.Category
-	authenticatedUser *dto.User
-	myStorage         storage.MyStorage
+	UserStorage       []entity.User
+	taskStorage       []entity.Task
+	categoryStorage   []entity.Category
+	authenticatedUser *entity.User
+	writeToMyStorage  contract.WriteUserToStorage
+	ReadFromMyStorage contract.ReadUserFromStorage
 )
 
 const (
@@ -31,8 +33,9 @@ func main() {
 	// init storage
 	dataStore := storage.NewFileStorage(&UserStorage, SerializationMode, UserFile)
 
-	myStorage = dataStore
-	myStorage.Load()
+	writeToMyStorage = dataStore
+	ReadFromMyStorage = dataStore
+	ReadFromMyStorage.Load()
 
 	command := flag.String("command", "no-command", "command to run")
 	flag.Parse()
@@ -126,7 +129,7 @@ func createTask() {
 		return
 	}
 
-	task := dto.Task{
+	task := entity.Task{
 		ID:       len(taskStorage) + 1,
 		Title:    name,
 		Category: categoryId,
@@ -152,7 +155,7 @@ func createCategory() {
 	scanner.Scan()
 	color = scanner.Text()
 
-	category := dto.Category{
+	category := entity.Category{
 		ID:     len(categoryStorage) + 1,
 		Title:  title,
 		Color:  color,
@@ -188,7 +191,7 @@ func registerUser() {
 		return
 	}
 
-	user := dto.User{
+	user := entity.User{
 		Id:       len(UserStorage) + 1,
 		Name:     name,
 		Email:    email,
@@ -198,7 +201,7 @@ func registerUser() {
 	UserStorage = append(UserStorage, user)
 
 	// Add new user to user.txt file
-	myStorage.Save(user)
+	writeToMyStorage.Save(user)
 }
 
 func hashPassword(password string) (string, error) {

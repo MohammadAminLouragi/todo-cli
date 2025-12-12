@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/MohammadAminLouragi/todo-cli/dto"
+	"github.com/MohammadAminLouragi/todo-cli/entity"
 )
 
 
