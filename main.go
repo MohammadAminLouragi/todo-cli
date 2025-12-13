@@ -28,7 +28,7 @@ const (
 )
 
 func main() {
-	fmt.Println("Hello to TODO app.")
+	fmt.Println("Hello to TODO app. let's go")
 
 	// init storage
 	dataStore := storage.NewFileStorage(&UserStorage, SerializationMode, UserFile)
