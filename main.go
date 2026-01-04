@@ -28,7 +28,7 @@ const (
 )
 
 func main() {
-	fmt.Println("Hello to TODO app....")
+	fmt.Println("Hello to TODO app....- fake")
 	fmt.Println("Please enter a command to continue...")
 
 
